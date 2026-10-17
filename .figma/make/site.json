@@ -1,0 +1,10 @@
+{
+  "description": "Manage and customize support tickets with dynamic workflows, enabling users to create, edit, and track complex processes through an intuitive, responsive interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
