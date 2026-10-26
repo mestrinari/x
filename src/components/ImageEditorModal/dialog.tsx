@@ -224,6 +224,7 @@ export const Dialog = React.forwardRef<HTMLButtonElement, DialogProps>(
     </DialogPrimitive.Root>
   ),
 );
+
 Dialog.displayName = "Dialog";
 
 /** Dialog content with entrance animation */
@@ -249,6 +250,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     </StyledContent>
   ),
 );
+
 DialogContent.displayName = "DialogContent";
 
 /** Header section inside dialog */
@@ -259,6 +261,7 @@ export const DialogHeader = forwardRef<HTMLDivElement, DialogHeaderProps>(
     </StyledHeader>
   ),
 );
+
 DialogHeader.displayName = "DialogHeader";
 
 /** Title */
@@ -269,6 +272,7 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
     </StyledTitle>
   ),
 );
+
 DialogTitle.displayName = "DialogTitle";
 
 /** Description / subtitle */
@@ -280,6 +284,7 @@ export const DialogDescription = forwardRef<
     {children}
   </StyledDescription>
 ));
+
 DialogDescription.displayName = "DialogDescription";
 
 /** Footer actions row */
@@ -290,6 +295,7 @@ export const DialogFooter = forwardRef<HTMLDivElement, DialogFooterProps>(
     </StyledFooter>
   ),
 );
+
 DialogFooter.displayName = "DialogFooter";
 
 /** Close trigger button */
@@ -300,4 +306,5 @@ export const DialogClose = forwardRef<HTMLButtonElement, DialogCloseProps>(
     </StyledClose>
   ),
 );
+
 DialogClose.displayName = "DialogClose";

@@ -19,6 +19,7 @@ export function AppLayout() {
   const { users, actorId, setActorId } = useDirectory();
   const [open, setOpen] = useState(false);
   const location = useLocation();
+
   return (
     <div className="app-shell">
       {open && <button className="mobile-overlay" aria-label="Fechar menu" onClick={() => setOpen(false)} />}
@@ -44,6 +45,7 @@ function routeLabel(path: string) {
   if (path.startsWith('/usuarios')) return 'Usuários';
   if (path.startsWith('/chamados/')) return 'Detalhes do chamado';
   if (path.startsWith('/chamados')) return 'Chamados';
+
   return nav.find((item) => item.path === path)?.label ?? 'Página';
 }
 

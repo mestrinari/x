@@ -22,6 +22,7 @@ export function useFloatingImageEditor() {
     else windowRef.current?.close();
     setState(value);
   }, []);
+
   return { windowRef, open, setOpen };
 }
 
@@ -31,9 +32,11 @@ type Props = ImageEditorProps & {
 
 export function FloatingImageEditor({ windowRef, ...props }: Props) {
   const id = useId();
+
   useEffect(() => {
     if (!props.open) windowRef.current?.close();
   }, [props.open, windowRef]);
+
   return (
     <FloatingWindow
       ref={windowRef}

@@ -16,18 +16,24 @@ export function observarMensagens(etapaId: ApiId, atualizar: () => void, status:
     status(false);
     retry = setTimeout(() => { retry = undefined; void iniciar(); }, 5000);
   };
+
   async function iniciar() {
     try {
       await connection.start();
-      if (encerrado) { await connection.stop(); return; }
+      if (encerrado) { await connection.stop();
+
+ return; }
+
       conectado();
     } catch { agendar(); }
   }
+
   connection.on("MensagensAlteradas", () => { if (!encerrado) atualizar(); });
   connection.onreconnecting(() => { if (!encerrado) status(false); });
   connection.onreconnected(conectado);
   connection.onclose(agendar);
   void iniciar();
+
   return () => {
     encerrado = true;
     clearTimeout(retry);

@@ -13,11 +13,13 @@ export function drawStroke(ctx: CanvasRenderingContext2D, stroke: Stroke) {
   } else {
     ctx.strokeStyle = stroke.color;
   }
+
   ctx.beginPath();
   ctx.moveTo(stroke.points[0]!.x, stroke.points[0]!.y);
   for (let i = 1; i < stroke.points.length; i++) {
     ctx.lineTo(stroke.points[i]!.x, stroke.points[i]!.y);
   }
+
   ctx.stroke();
   ctx.restore();
 }
@@ -30,10 +32,12 @@ export function drawRect(
   ctx.save();
   const cx = rect.x + rect.width / 2;
   const cy = rect.y + rect.height / 2;
+
   ctx.translate(cx, cy);
   ctx.rotate(toRad(rect.rotation));
   if (rect.imageDataUrl) {
     const image = layerImages.get(rect.imageDataUrl);
+
     if (image?.complete && image.naturalWidth)
       ctx.drawImage(
         image,
@@ -43,8 +47,10 @@ export function drawRect(
         rect.height,
       );
     ctx.restore();
+
     return;
   }
+
   ctx.lineWidth = rect.strokeWidth;
   ctx.strokeStyle = rect.strokeColor;
   if (rect.fillColor !== "transparent") {
@@ -53,6 +59,7 @@ export function drawRect(
     ctx.fillRect(-rect.width / 2, -rect.height / 2, rect.width, rect.height);
     ctx.globalAlpha = 1;
   }
+
   ctx.strokeRect(-rect.width / 2, -rect.height / 2, rect.width, rect.height);
   ctx.restore();
 }
@@ -62,6 +69,7 @@ export function drawText(ctx: CanvasRenderingContext2D, text: TextShape) {
   const dims = getTextDimensions(text, ctx);
   const cx = text.x + dims.w / 2;
   const cy = text.y - dims.h / 2;
+
   ctx.translate(cx, cy);
   ctx.rotate(toRad(text.rotation));
   ctx.font = `${text.fontWeight === "bold" ? "bold" : "normal"} ${text.fontSize}px sans-serif`;

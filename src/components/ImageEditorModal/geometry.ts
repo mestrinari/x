@@ -2,9 +2,11 @@ import type { CanvasItem, DrawPoint, RectShape, ResizeHandle, Stroke, TextShape 
 import { HANDLE_HIT, ROTATE_HANDLE_OFFSET } from "./constants";
 
 let _id = 0;
+
 export const uid = () => `item_${++_id}_${Date.now()}`;
 
 export const toRad = (deg: number) => (deg * Math.PI) / 180;
+
 export const toDeg = (rad: number) => (rad * 180) / Math.PI;
 
 export function clamp(val: number, min: number, max: number) {
@@ -28,6 +30,7 @@ export function pointInTransformedRect(
   const sin = Math.sin(rad);
   const lx = (px - cx) * cos - (py - cy) * sin + cx;
   const ly = (px - cx) * sin + (py - cy) * cos + cy;
+
   return (
     lx >= rx - tolerance &&
     lx <= rx + rw + tolerance &&
@@ -46,6 +49,7 @@ export function pointInStroke(
     if (Math.abs(px - p.x) <= tolerance && Math.abs(py - p.y) <= tolerance)
       return true;
   }
+
   return false;
 }
 
@@ -61,7 +65,9 @@ export function pointInText(
   const metrics = ctx.measureText(text.text);
   const tw = metrics.width;
   const th = text.fontSize;
+
   ctx.restore();
+
   return pointInTransformedRect(px, py, text.x, text.y - th, tw, th, text.rotation, tolerance);
 }
 
@@ -72,7 +78,9 @@ export function getTextDimensions(
   ctx.save();
   ctx.font = `${text.fontWeight === "bold" ? "bold" : "normal"} ${text.fontSize}px sans-serif`;
   const metrics = ctx.measureText(text.text);
+
   ctx.restore();
+
   return { w: metrics.width, h: text.fontSize };
 }
 
@@ -91,6 +99,7 @@ export function getSelectableBounds(
   }
 
   const dimensions = getTextDimensions(item, ctx);
+
   return {
     x: item.x,
     y: item.y - dimensions.h,
@@ -129,10 +138,12 @@ export function hitTestResizeHandle(
   for (const handle of handles) {
     const hx = (handle.localX - cx) * cos - (handle.localY - cy) * sin + cx;
     const hy = (handle.localX - cx) * sin + (handle.localY - cy) * cos + cy;
+
     if (Math.abs(px - hx) <= tolerance && Math.abs(py - hy) <= tolerance) {
       return handle.key;
     }
   }
+
   return null;
 }
 
@@ -154,6 +165,7 @@ export function hitTestRotateHandle(
   const handleLocalY = y - ROTATE_HANDLE_OFFSET;
   const hx = (handleLocalX - cx) * cos - (handleLocalY - cy) * sin + cx;
   const hy = (handleLocalX - cx) * sin + (handleLocalY - cy) * cos + cy;
+
   return (
     Math.abs(px - hx) <= tolerance && Math.abs(py - hy) <= tolerance
   );
@@ -198,6 +210,7 @@ export function applyResize(
     if (handle === "nw" || handle === "sw" || handle === "w") x += width - 5;
     width = 5;
   }
+
   if (height < 5) {
     if (handle === "nw" || handle === "n" || handle === "ne") y += height - 5;
     height = 5;
@@ -215,24 +228,31 @@ export function wrapCanvasText(
   const words = value.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let current = "";
+
   for (const word of words) {
     const candidate = current ? `${current} ${word}` : word;
+
     if (ctx.measureText(candidate).width <= maxWidth || !current) {
       current = candidate;
       continue;
     }
+
     lines.push(current);
     current = word;
     if (lines.length === maxLines - 1) break;
   }
+
   if (current && lines.length < maxLines) lines.push(current);
   if (lines.length === maxLines && words.join(" ") !== lines.join(" ")) {
     let last = lines[maxLines - 1];
+
     while (last!.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
       last = last!.slice(0, -1);
     }
+
     lines[maxLines - 1] = `${last}…`;
   }
+
   return lines;
 }
 
@@ -240,9 +260,12 @@ export function getTrackingAnchor(item: CanvasItem, ctx: CanvasRenderingContext2
   if (item.tool === "rectangle") return { x: item.x, y: item.y };
   if (item.tool === "text") {
     const dimensions = getTextDimensions(item, ctx);
+
     return { x: item.x, y: item.y - dimensions.h };
   }
+
   const points = item.points;
+
   return {
     x: Math.min(...points.map(point => point.x)),
     y: Math.min(...points.map(point => point.y)),
@@ -258,6 +281,7 @@ export function applyTrackingColorToItem(item: CanvasItem, color: string): Canva
       points: item.points.map(point => ({ ...point, color })),
     };
   }
+
   if (item.tool === "rectangle") {
     return {
       ...item,
@@ -265,6 +289,7 @@ export function applyTrackingColorToItem(item: CanvasItem, color: string): Canva
       fillColor: item.fillColor === "transparent" ? "transparent" : color,
     };
   }
+
   return { ...item, color };
 }
 
@@ -274,12 +299,14 @@ export function getCanvasItemLabel(item: CanvasItem, index: number) {
   if (item.tool === "eraser") return `Borracha ${index + 1}`;
   if (item.tool === "rectangle") return `Retângulo ${index + 1}`;
   if (item.tool === "text") return item.text.trim() || `Texto ${index + 1}`;
+
   return `Item ${index + 1}`;
 }
 
 export function getCanvasItemColor(item: CanvasItem) {
   if (item.tool === "rectangle") return item.strokeColor;
   if (item.tool === "eraser") return "#64748b";
+
   return item.color;
 }
 

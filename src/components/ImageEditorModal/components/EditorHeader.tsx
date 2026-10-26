@@ -37,6 +37,7 @@ type Props = Pick<
     | "hideExport"
     | "sendToTicketDisabled"
   >;
+
 export function EditorHeader({
   imageSrc,
   isLoadingImage,

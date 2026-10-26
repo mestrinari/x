@@ -8,6 +8,7 @@ import { UserForm, UsersPage } from '../pages/UsersPage';
 
 function LegacyEditRedirect() {
   const { id } = useParams();
+
   return <Navigate to={`/chamados/${id}`} replace />;
 }
 

@@ -39,6 +39,7 @@ type Props = Pick<
   | "createTrackingStep"
   | "activeTrackingStep"
 >;
+
 export function TrackingWorkspace({
   items,
   trackingSteps,
@@ -180,6 +181,7 @@ export function TrackingWorkspace({
                 (item) =>
                   item.trackingStepId === step.id && item.tool !== "eraser",
               ).length;
+
               return (
                 <TrackingStepCard
                   type="button"

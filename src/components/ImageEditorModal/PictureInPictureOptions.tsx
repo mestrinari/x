@@ -54,15 +54,19 @@ let nativePictureInPictureOpening = false;
 
 function getOpenExternalWindow(windowId: string) {
   const existing = externalWindows.get(windowId);
+
   if (existing?.closed) {
     externalWindows.delete(windowId);
+
     return null;
   }
+
   return existing ?? null;
 }
 
 function openPopupWindow(windowId: string, width: number, height: number) {
   const safeName = `qa_devtools_${windowId.replace(/[^a-z0-9_-]/gi, "_")}`;
+
   return window.open(
     "",
     safeName,
@@ -76,6 +80,7 @@ function installDevToolsStyles(targetWindow: Window) {
 
   shadowStyles?.forEach((source) => {
     const style = targetWindow.document.createElement("style");
+
     style.textContent = source.textContent;
     targetWindow.document.head.appendChild(style);
   });
@@ -86,11 +91,13 @@ function installDevToolsStyles(targetWindow: Window) {
         .map((rule) => rule.cssText)
         .join("\n");
       const style = targetWindow.document.createElement("style");
+
       style.textContent = css;
       targetWindow.document.head.appendChild(style);
     } catch {
       if (!styleSheet.href) continue;
       const link = targetWindow.document.createElement("link");
+
       link.rel = "stylesheet";
       link.href = styleSheet.href;
       targetWindow.document.head.appendChild(link);
@@ -123,15 +130,18 @@ export const FloatingWindow = forwardRef<
   const generation = useRef(0);
   const mounted = useRef(true);
   const closeCallback = useRef(onClose);
+
   closeCallback.current = onClose;
   const windowId = configuredWindowId ?? title;
   const isSupported = Boolean(window.documentPictureInPicture);
 
   const close = useCallback(() => {
     const wasActive = active.current;
+
     active.current = false;
     generation.current++;
     const previous = current.current;
+
     current.current = null;
     if (externalWindows.get(windowId) === previous)
       externalWindows.delete(windowId);
@@ -147,16 +157,22 @@ export const FloatingWindow = forwardRef<
   const open = useCallback(() => {
     if (active.current) {
       current.current?.focus();
+
       return;
     }
+
     if (openingWindowIds.has(windowId)) return;
     const registered = getOpenExternalWindow(windowId);
+
     if (registered) {
       registered.focus();
+
       return;
     }
+
     active.current = true;
     const requestGeneration = ++generation.current;
+
     setIsOpening(true);
     openingWindowIds.add(windowId);
     const themeSource =
@@ -169,6 +185,7 @@ export const FloatingWindow = forwardRef<
     );
     // Keep the request in the click handler: Document PiP needs user activation.
     let request: Promise<Window | null>;
+
     try {
       if (nativeAvailable) {
         nativePictureInPictureOpening = true;
@@ -188,12 +205,16 @@ export const FloatingWindow = forwardRef<
       .then((pip) => {
         if (!mounted.current || requestGeneration !== generation.current) {
           pip?.close();
+
           return;
         }
+
         if (!pip) {
           setFallbackOpen(true);
+
           return;
         }
+
         current.current = pip;
         pip.document.title = title;
         installDevToolsStyles(pip);
@@ -202,14 +223,17 @@ export const FloatingWindow = forwardRef<
         pip.document.body.className = document.body.className;
         pip.document.body.classList.add("qa-devtools-pip-body");
         const computed = window.getComputedStyle(themeSource);
+
         for (let i = 0; i < computed.length; i++) {
           const property = computed.item(i);
+
           if (property.startsWith("--"))
             pip.document.body.style.setProperty(
               property,
               computed.getPropertyValue(property),
             );
         }
+
         Object.assign(pip.document.body.style, {
           margin: "0",
           width: "100vw",
@@ -248,6 +272,7 @@ export const FloatingWindow = forwardRef<
   useImperativeHandle(ref, () => ({ open, close }), [open, close]);
   useEffect(() => {
     mounted.current = true;
+
     return () => {
       mounted.current = false;
       close();
@@ -273,6 +298,7 @@ export const FloatingWindow = forwardRef<
       </div>
     </StyleSheetManager>
   );
+
   return (
     <>
       {renderTrigger?.(open, {

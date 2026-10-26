@@ -13,6 +13,7 @@ export function NotificationBell() {
     setOpen(false);
     if (url && /^\/chamados\/\d+(\?|$)/.test(url)) navigate(url);
   };
+
   return <div className="notifications-root">
     <button type="button" className="notifications-bell" onClick={() => setOpen(value => !value)} aria-label={`Notificações: ${unread} não lidas`} aria-expanded={open}>
       <Bell size={19}/>{unread > 0 && <span className="notifications-count">{unread > 99 ? '99+' : unread}</span>}

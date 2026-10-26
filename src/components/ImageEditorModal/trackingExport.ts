@@ -14,6 +14,7 @@ export function drawTrackingExportOverlay(
       items: items.filter(item => item.tool !== "eraser" && item.trackingStepId === step.id),
     }))
     .filter(entry => entry.items.length > 0);
+
   if (!trackedSteps.length) return;
 
   const fontSize = clamp(Math.round(width / 85), 11, 20);
@@ -25,6 +26,7 @@ export function drawTrackingExportOverlay(
       const anchor = getTrackingAnchor(item, ctx);
       const x = clamp(anchor.x, badgeRadius + 2, width - badgeRadius - 2);
       const y = clamp(anchor.y, badgeRadius + 2, height - badgeRadius - 2);
+
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, badgeRadius, 0, Math.PI * 2);
@@ -54,7 +56,9 @@ export function drawTrackingExportOverlay(
     const descriptionLines = entry.step.description
       ? wrapCanvasText(ctx, entry.step.description, contentWidth, 3)
       : [];
+
     ctx.restore();
+
     return {
       ...entry,
       descriptionLines,
@@ -78,6 +82,7 @@ export function drawTrackingExportOverlay(
   ctx.clip();
 
   let cursorY = panelY + padding;
+
   ctx.fillStyle = "#ffffff";
   ctx.font = `bold ${fontSize}px sans-serif`;
   ctx.textAlign = "left";
@@ -87,9 +92,11 @@ export function drawTrackingExportOverlay(
 
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
+
     if (cursorY + lineHeight > panelY + panelHeight - padding) break;
     const markerX = panelX + padding + badgeRadius;
     const markerY = cursorY + badgeRadius;
+
     ctx.beginPath();
     ctx.arc(markerX, markerY, badgeRadius, 0, Math.PI * 2);
     ctx.fillStyle = row!.step.color;
@@ -101,22 +108,26 @@ export function drawTrackingExportOverlay(
     ctx.fillText(String(index + 1), markerX, markerY + 0.5);
 
     const textX = panelX + padding * 2 + badgeRadius * 2;
+
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(`${row!.step.code} · ${row!.step.name}`, textX, cursorY);
     let descriptionY = cursorY + lineHeight;
+
     ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
     ctx.font = `${fontSize}px sans-serif`;
     row!.descriptionLines.forEach(line => {
       if (descriptionY + lineHeight <= panelY + panelHeight - padding) {
         ctx.fillText(line, textX, descriptionY);
       }
+
       descriptionY += lineHeight;
     });
     cursorY += row!.height;
   }
+
   ctx.restore();
 }
 

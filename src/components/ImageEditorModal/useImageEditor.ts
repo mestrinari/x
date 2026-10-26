@@ -108,21 +108,27 @@ export function useImageEditor({
   const [items, setItems] = useState<CanvasItem[]>([]);
   const layerImages = useRef(new Map<string, HTMLImageElement>());
   const [layerRevision, setLayerRevision] = useState(0);
+
   useEffect(() => {
     const cleanups: Array<() => void> = [];
+
     for (const item of items) {
       if (item.tool !== "rectangle" || !item.imageDataUrl) continue;
       let image = layerImages.current.get(item.imageDataUrl);
+
       if (!image) {
         image = new Image();
         layerImages.current.set(item.imageDataUrl, image);
         image.src = item.imageDataUrl;
       }
+
       if (image.complete && image.naturalWidth) continue;
       const loaded = () => setLayerRevision((value) => value + 1);
+
       image.addEventListener("load", loaded);
       cleanups.push(() => image.removeEventListener("load", loaded));
     }
+
     return () => cleanups.forEach((cleanup) => cleanup());
   }, [items]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -199,9 +205,11 @@ export function useImageEditor({
         const next = [...previous];
         const fromIndex = next.indexOf(draggedPanel);
         const toIndex = next.indexOf(targetPanel);
+
         if (fromIndex < 0 || toIndex < 0) return previous;
         next.splice(fromIndex, 1);
         next.splice(toIndex, 0, draggedPanel);
+
         return next;
       });
       setDraggedPanel(null);
@@ -289,10 +297,13 @@ export function useImageEditor({
   const createTrackingStep = useCallback(() => {
     const code = trackingCode.trim();
     const name = trackingName.trim();
+
     if (!code || !name) {
       setTrackingError("Informe um ID e um nome para o passo.");
+
       return;
     }
+
     if (
       trackingSteps.some(
         (step) =>
@@ -301,8 +312,10 @@ export function useImageEditor({
       )
     ) {
       setTrackingError("Já existe um passo com esse ID.");
+
       return;
     }
+
     const step: TrackingStep = {
       id: `tracking_${uid()}`,
       code,
@@ -310,6 +323,7 @@ export function useImageEditor({
       description: trackingDescription.trim(),
       color: trackingDraftColor || "#0EA5E9",
     };
+
     setTrackingSteps((previous) => [...previous, step]);
     setActiveTrackingStepId(step.id);
     setCurrentColor(step.color);
@@ -335,11 +349,13 @@ export function useImageEditor({
       nextTrackingSteps: TrackingStep[] = [],
     ) => {
       const img = new Image();
+
       setIsLoadingImage(true);
       setImageError(null);
       if (!src.startsWith("data:") && !src.startsWith("blob:")) {
         img.crossOrigin = "anonymous";
       }
+
       img.onload = () => {
         sourceImageRef.current = img;
         setImageDimensions({ w: img.naturalWidth, h: img.naturalHeight });
@@ -365,12 +381,14 @@ export function useImageEditor({
         setCropArea(null);
         setIsLoadingImage(false);
       };
+
       img.onerror = () => {
         setIsLoadingImage(false);
         setImageError(
           "Não foi possível abrir a imagem. Verifique o arquivo ou a permissão CORS da URL.",
         );
       };
+
       img.src = src;
     },
     [],
@@ -418,9 +436,11 @@ export function useImageEditor({
 
   const fitImageToArea = useCallback(() => {
     const area = canvasAreaRef.current;
+
     if (!area || !imageDimensions.w || !imageDimensions.h) return;
     const availableWidth = Math.max(1, area.clientWidth - 40);
     const availableHeight = Math.max(1, area.clientHeight - 40);
+
     setZoom(
       clamp(
         Math.min(
@@ -442,7 +462,9 @@ export function useImageEditor({
       area && typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(fitImageToArea)
         : null;
+
     if (area && observer) observer.observe(area);
+
     return () => {
       window.cancelAnimationFrame(frame);
       observer?.disconnect();
@@ -452,32 +474,41 @@ export function useImageEditor({
   /* ── file handling ── */
   const pasteQueue = useRef(Promise.resolve());
   const pasteState = useRef({ items, pushHistory, imageDimensions });
+
   pasteState.current = { items, pushHistory, imageDimensions };
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
       setImageError("Selecione um arquivo de imagem válido.");
+
       return;
     }
+
     if (file.size > MAX_IMAGE_BYTES) {
       setImageError("A imagem deve ter no máximo 20 MB.");
+
       return;
     }
+
     pasteQueue.current = pasteQueue.current
       .then(async () => {
         const bitmap = new Image();
         const sourceUrl = URL.createObjectURL(file);
+
         bitmap.src = sourceUrl;
         try {
           await bitmap.decode();
         } finally {
           URL.revokeObjectURL(sourceUrl);
         }
+
         const normalized = document.createElement("canvas");
+
         normalized.width = bitmap.width;
         normalized.height = bitmap.height;
         normalized.getContext("2d")!.drawImage(bitmap, 0, 0);
         const dataUrl = normalized.toDataURL("image/png");
         const image = new Image();
+
         image.src = dataUrl;
         await image.decode();
         layerImages.current.set(dataUrl, image);
@@ -505,12 +536,14 @@ export function useImageEditor({
           fillOpacity: 1,
           rotation: 0,
         };
+
         if (!hasBase) {
           normalized
             .getContext("2d")!
             .clearRect(0, 0, normalized.width, normalized.height);
           const blank = normalized.toDataURL("image/png");
           const base = new Image();
+
           base.src = blank;
           await base.decode();
           state.pushHistory([layer], base, blank);
@@ -533,9 +566,11 @@ export function useImageEditor({
   const handlePaste = useCallback(
     (e: ClipboardEvent) => {
       const items = e.clipboardData!.items;
+
       for (const item of items) {
         if (item.type.startsWith("image/")) {
           const file = item.getAsFile();
+
           if (file) {
             e.preventDefault();
             handleFile(file);
@@ -562,26 +597,33 @@ export function useImageEditor({
         setImageError(
           "A colagem de imagem não está disponível neste navegador. Use Ctrl+V.",
         );
+
         return;
       }
+
       const clipboardItems = await (
         portalContainer?.ownerDocument.defaultView ?? window
       ).navigator.clipboard.read();
+
       for (const clipboardItem of clipboardItems) {
         const imageType = clipboardItem.types.find((type) =>
           type.startsWith("image/"),
         );
+
         if (!imageType) continue;
         const blob = await clipboardItem.getType(imageType);
         const extension = imageType.split("/")[1] || "png";
+
         handleFile(
           new File([blob], `imagem-colada-${Date.now()}.${extension}`, {
             type: imageType,
           }),
         );
         setImageError(null);
+
         return;
       }
+
       setImageError("Não há uma imagem na área de transferência.");
     } catch {
       setImageError(
@@ -594,7 +636,9 @@ export function useImageEditor({
     if (!open) return undefined;
 
     const targetDocument = portalContainer?.ownerDocument ?? document;
+
     targetDocument.addEventListener("paste", handlePaste);
+
     return () => targetDocument.removeEventListener("paste", handlePaste);
   }, [open, handlePaste, portalContainer]);
 
@@ -605,30 +649,37 @@ export function useImageEditor({
       const isFormControl = target.matches(
         "input, textarea, select, [contenteditable='true']",
       );
+
       if (isFormControl && e.key !== "Escape") return;
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) redo();
         else undo();
       }
+
       if (e.key === "Delete" && selectedId) {
         const newItems = items.filter((it) => it.id !== selectedId);
+
         pushHistory(newItems);
         setSelectedId(null);
       }
+
       if (e.key === "Escape") {
         setSelectedId(null);
         setCurrentRect(null);
         setCropArea(null);
       }
+
       if (e.key === "r" && selectedId && !e.ctrlKey && !e.metaKey) {
         const newItems = items.map((item) => {
           if (item.id !== selectedId) return item;
           if (item.tool === "rectangle" || item.tool === "text") {
             return { ...item, rotation: (item.rotation + 15) % 360 };
           }
+
           return item;
         });
+
         pushHistory(newItems);
       }
     },
@@ -639,8 +690,10 @@ export function useImageEditor({
   const getCanvasCoords = useCallback(
     (e: { clientX: number; clientY: number }): { x: number; y: number } => {
       const wrapper = wrapperRef.current;
+
       if (!wrapper) return { x: 0, y: 0 };
       const rect = wrapper.getBoundingClientRect();
+
       return {
         x: clamp((e.clientX - rect.left) / zoom, 0, imageDimensions.w),
         y: clamp((e.clientY - rect.top) / zoom, 0, imageDimensions.h),
@@ -677,14 +730,17 @@ export function useImageEditor({
       { x: x + width, y: y + height },
       { x, y: y + height },
     ];
+
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
       const p = corners[i];
       const rx = (p!.x - cx) * cos - (p!.y - cy) * sin + cx;
       const ry = (p!.x - cx) * sin + (p!.y - cy) * cos + cy;
+
       if (i === 0) ctx.moveTo(rx, ry);
       else ctx.lineTo(rx, ry);
     }
+
     ctx.closePath();
     ctx.stroke();
     ctx.setLineDash([]);
@@ -701,6 +757,7 @@ export function useImageEditor({
     ];
 
     const hs = HANDLE_SIZE / zoom;
+
     ctx.fillStyle = "#fff";
     ctx.strokeStyle = "#e94560";
     ctx.lineWidth = 2 / zoom;
@@ -708,6 +765,7 @@ export function useImageEditor({
     for (const h of handles) {
       const rx = (h.lx - cx) * cos - (h.ly - cy) * sin + cx;
       const ry = (h.lx - cx) * sin + (h.ly - cy) * cos + cy;
+
       ctx.beginPath();
       ctx.arc(rx, ry, hs / 2, 0, Math.PI * 2);
       ctx.fill();
@@ -720,6 +778,7 @@ export function useImageEditor({
     const rotRy = (rotLx - cx) * sin + (rotLy - cy) * cos + cy;
     const topRx = (cx - cx) * cos - (y - cy) * sin + cx;
     const topRy = (cx - cx) * sin + (y - cy) * cos + cy;
+
     ctx.beginPath();
     ctx.moveTo(topRx, topRy);
     ctx.lineTo(rotRx, rotRy);
@@ -745,9 +804,11 @@ export function useImageEditor({
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
+
     if (!canvas || !wrapper) return;
 
     const ctx = canvas.getContext("2d");
+
     if (!ctx) return;
 
     const dpr =
@@ -759,6 +820,7 @@ export function useImageEditor({
     const pixelHeight = Math.round(h * dpr);
     const cssWidth = `${w * zoom}px`;
     const cssHeight = `${h * zoom}px`;
+
     if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
     if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
     if (canvas.style.width !== cssWidth) canvas.style.width = cssWidth;
@@ -770,6 +832,7 @@ export function useImageEditor({
     if (sourceImageRef.current) {
       ctx.drawImage(sourceImageRef.current, 0, 0, w, h);
     }
+
     drawAllItems(ctx);
   }, [
     imageSrc,
@@ -805,6 +868,7 @@ export function useImageEditor({
 
       if (selectedId && tool === "select") {
         const sel = items.find((i) => i.id === selectedId);
+
         if (sel && (sel.tool === "rectangle" || sel.tool === "text")) {
           drawSelectionHandles(ctx, sel as RectShape | TextShape);
         }
@@ -841,8 +905,10 @@ export function useImageEditor({
 
       if (tool === "select" && selectedId) {
         const sel = items.find((i) => i.id === selectedId);
+
         if (sel && (sel.tool === "rectangle" || sel.tool === "text")) {
           const context = canvasRef.current?.getContext("2d");
+
           if (!context) return;
           const {
             width: w,
@@ -860,10 +926,12 @@ export function useImageEditor({
               centerX: rx + w / 2,
               centerY: ry + h / 2,
             });
+
             return;
           }
 
           const hitHandle = hitTestResizeHandle(x, y, rx, ry, w, h, rotation);
+
           if (hitHandle) {
             setIsResizing(true);
             setResizeState({
@@ -871,6 +939,7 @@ export function useImageEditor({
               startMouse: { x, y },
               startBounds: { x: rx, y: ry, width: w, height: h },
             });
+
             return;
           }
 
@@ -878,31 +947,38 @@ export function useImageEditor({
             sel.tool === "rectangle"
               ? pointInTransformedRect(x, y, rx, ry, w, h, rotation)
               : pointInText(x, y, sel as TextShape, context);
+
           if (hit) {
             setIsDragging(true);
             if (sel.tool === "rectangle") {
               setDragOffset({ x: x - rx, y: y - ry });
             } else {
               const dims = getTextDimensions(sel as TextShape, context);
+
               setDragOffset({
                 x: x - (sel as TextShape).x,
                 y: y - ((sel as TextShape).y - dims.h),
               });
             }
+
             return;
           }
 
           setSelectedId(null);
+
           return;
         }
       }
 
       if (tool === "select") {
         const ctx = canvasRef.current?.getContext("2d");
+
         if (!ctx) return;
         let foundId: string | null = null;
+
         for (let i = items.length - 1; i >= 0; i--) {
           const item = items[i];
+
           if (item!.tool === "rectangle") {
             if (
               pointInTransformedRect(
@@ -930,19 +1006,23 @@ export function useImageEditor({
               const pts = item!.points;
               const minX = Math.min(...pts.map((p) => p!.x));
               const minY = Math.min(...pts.map((p) => p!.y));
+
               setDragOffset({ x: x - minX, y: y - minY });
               break;
             }
           }
         }
+
         setSelectedId(foundId);
         setIsDragging(!!foundId);
+
         return;
       }
 
       if (tool === "pen" || tool === "eraser") {
         setIsDrawing(true);
         setCurrentStroke([{ x, y, color: currentColor, width: strokeWidth }]);
+
         return;
       }
 
@@ -965,6 +1045,7 @@ export function useImageEditor({
           fillOpacity: rectFillOpacity,
           rotation: 0,
         });
+
         return;
       }
 
@@ -984,9 +1065,11 @@ export function useImageEditor({
             fontWeight,
             rotation: 0,
           };
+
           pushHistory([...items, newText]);
           setSelectedId(newText.id);
         }
+
         return;
       }
 
@@ -994,6 +1077,7 @@ export function useImageEditor({
         setIsCropDragging(true);
         setCropDragStart({ x, y });
         setCropArea({ x, y, w: 0, h: 0 });
+
         return;
       }
     },
@@ -1033,9 +1117,12 @@ export function useImageEditor({
           : newAngle;
         const newItems = items.map((item) => {
           if (item.id !== selectedId) return item;
+
           return { ...item, rotation: snappedAngle % 360 };
         });
+
         setItems(newItems);
+
         return;
       }
 
@@ -1043,6 +1130,7 @@ export function useImageEditor({
         const dx = x - resizeState.startMouse.x;
         const dy = y - resizeState.startMouse.y;
         const sel = items.find((i) => i.id === selectedId);
+
         if (sel && (sel.tool === "rectangle" || sel.tool === "text")) {
           const rotation = (sel as RectShape | TextShape).rotation || 0;
           const correctedBounds = applyResize(
@@ -1063,6 +1151,7 @@ export function useImageEditor({
                 height: correctedBounds.height,
               } as RectShape;
             }
+
             if (item.tool === "text") {
               const heightRatio =
                 correctedBounds.height / resizeState.startBounds.height;
@@ -1073,6 +1162,7 @@ export function useImageEditor({
                   Math.round((sel as TextShape).fontSize * heightRatio),
                 ),
               );
+
               return {
                 ...item,
                 fontSize: newFontSize,
@@ -1080,10 +1170,13 @@ export function useImageEditor({
                 y: correctedBounds.y + correctedBounds.height,
               } as TextShape;
             }
+
             return item;
           });
+
           setItems(newItems);
         }
+
         return;
       }
 
@@ -1092,6 +1185,7 @@ export function useImageEditor({
           ...prev,
           { x, y, color: currentColor, width: strokeWidth },
         ]);
+
         return;
       }
 
@@ -1099,6 +1193,7 @@ export function useImageEditor({
         if (isDragging && dragStart && currentRect) {
           const w = x - dragStart.x;
           const h = y - dragStart.y;
+
           setCurrentRect({
             ...currentRect,
             x: w < 0 ? x : dragStart.x,
@@ -1107,6 +1202,7 @@ export function useImageEditor({
             height: Math.abs(h),
           });
         }
+
         return;
       }
 
@@ -1124,17 +1220,20 @@ export function useImageEditor({
               item as TextShape,
               canvasRef.current!.getContext("2d")!,
             );
+
             return {
               ...item,
               x: x - dragOffset.x,
               y: y - dragOffset.y + dims.h,
             } as TextShape;
           }
+
           if (item.tool === "pen" || item.tool === "eraser") {
             const dx =
               x - dragOffset.x - Math.min(...item.points.map((p) => p.x));
             const dy =
               y - dragOffset.y - Math.min(...item.points.map((p) => p.y));
+
             return {
               ...item,
               points: item.points.map((p) => ({
@@ -1144,9 +1243,12 @@ export function useImageEditor({
               })),
             };
           }
+
           return item;
         });
+
         setItems(newItems);
+
         return;
       }
 
@@ -1154,6 +1256,7 @@ export function useImageEditor({
         if (isCropDragging && cropDragStart) {
           const w = x - cropDragStart.x;
           const h = y - cropDragStart.y;
+
           setCropArea({
             x: w < 0 ? x : cropDragStart.x,
             y: h < 0 ? y : cropDragStart.y,
@@ -1161,6 +1264,7 @@ export function useImageEditor({
             h: Math.abs(h),
           });
         }
+
         return;
       }
     },
@@ -1198,10 +1302,13 @@ export function useImageEditor({
           color: currentColor,
           width: strokeWidth,
         };
+
         pushHistory([...items, stroke]);
       }
+
       setCurrentStroke([]);
       setIsDrawing(false);
+
       return;
     }
 
@@ -1210,15 +1317,18 @@ export function useImageEditor({
         pushHistory([...items, currentRect]);
         setSelectedId(currentRect.id);
       }
+
       setCurrentRect(null);
       setIsDragging(false);
       setDragStart(null);
+
       return;
     }
 
     if (tool === "select" && isDragging) {
       pushHistory(items);
       setIsDragging(false);
+
       return;
     }
 
@@ -1226,6 +1336,7 @@ export function useImageEditor({
       pushHistory(items);
       setIsResizing(false);
       setResizeState(null);
+
       return;
     }
 
@@ -1233,6 +1344,7 @@ export function useImageEditor({
       pushHistory(items);
       setIsRotating(false);
       setRotateState(null);
+
       return;
     }
 
@@ -1241,6 +1353,7 @@ export function useImageEditor({
         setCropArea(null);
       setIsCropDragging(false);
       setCropDragStart(null);
+
       return;
     }
   }, [
@@ -1287,6 +1400,7 @@ export function useImageEditor({
       e.stopPropagation();
       setIsDragOver(false);
       const files = e.dataTransfer.files;
+
       if (files.length > 0) handleFile(files[0]!);
     },
     [handleFile],
@@ -1318,6 +1432,7 @@ export function useImageEditor({
       return;
     const tempCanvas = document.createElement("canvas");
     const tempCtx = tempCanvas.getContext("2d");
+
     if (!tempCtx) return;
     tempCanvas.width = cropArea.w;
     tempCanvas.height = cropArea.h;
@@ -1349,6 +1464,7 @@ export function useImageEditor({
             },
     );
     const croppedImage = new Image();
+
     setIsLoadingImage(true);
     croppedImage.onload = () => {
       pushHistory(croppedItems, croppedImage, croppedDataUrl);
@@ -1356,15 +1472,18 @@ export function useImageEditor({
       setTool("select");
       setIsLoadingImage(false);
     };
+
     croppedImage.onerror = () => {
       setImageError("Não foi possível aplicar o recorte.");
       setIsLoadingImage(false);
     };
+
     croppedImage.src = croppedDataUrl;
   }, [cropArea, items, pushHistory]);
 
   const [canvasWidth, setCanvasWidth] = useState("1200");
   const [canvasHeight, setCanvasHeight] = useState("800");
+
   useEffect(() => {
     if (imageDimensions.w && imageDimensions.h) {
       setCanvasWidth(String(imageDimensions.w));
@@ -1375,6 +1494,7 @@ export function useImageEditor({
   const resizeCanvas = async () => {
     const width = Number(canvasWidth),
       height = Number(canvasHeight);
+
     if (
       !Number.isInteger(width) ||
       !Number.isInteger(height) ||
@@ -1387,8 +1507,10 @@ export function useImageEditor({
       setImageError(
         "Informe dimensões inteiras entre 1 e 8192 px, com no máximo 16 megapixels.",
       );
+
       return;
     }
+
     if (
       isLoadingImage ||
       (width === imageDimensions.w && height === imageDimensions.h)
@@ -1397,15 +1519,18 @@ export function useImageEditor({
     setIsLoadingImage(true);
     try {
       const canvas = document.createElement("canvas");
+
       canvas.width = width;
       canvas.height = height;
       const context = canvas.getContext("2d");
+
       if (!context) throw new Error("Canvas indisponível.");
       // Amplia a base sem escalar nem rasterizar as camadas editaveis.
       if (sourceImageRef.current)
         context.drawImage(sourceImageRef.current, 0, 0);
       const src = canvas.toDataURL("image/png");
       const image = new Image();
+
       image.src = src;
       await image.decode();
       pushHistory(items, image, src);
@@ -1425,8 +1550,10 @@ export function useImageEditor({
       if (item.id !== selectedId) return item;
       if (item.tool === "rectangle" || item.tool === "text")
         return { ...item, rotation: 0 } as RectShape | TextShape;
+
       return item;
     });
+
     pushHistory(newItems);
   }, [selectedId, items, pushHistory]);
 
@@ -1441,6 +1568,7 @@ export function useImageEditor({
   const handleUploadClick = () => fileInputRef.current?.click();
   const handleUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (file) handleFile(file);
     e.target.value = "";
   };
@@ -1471,6 +1599,7 @@ export function useImageEditor({
           )
         : item,
     );
+
     pushHistory(newItems);
   };
 
@@ -1481,8 +1610,10 @@ export function useImageEditor({
       if (item.tool === "rectangle" || item.tool === "text")
         return { ...item, rotation: clamp(deg, 0, 359) } as
           RectShape | TextShape;
+
       return item;
     });
+
     setItems(newItems);
   };
 
@@ -1582,4 +1713,5 @@ export function useImageEditor({
     commitRotationChange,
   };
 }
+
 export type ImageEditorController = ReturnType<typeof useImageEditor>;

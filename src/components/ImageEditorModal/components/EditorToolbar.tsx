@@ -37,6 +37,7 @@ type Props = Pick<
   | "clearAll"
   | "handleUploadClick"
 >;
+
 export function EditorToolbar({
   imageSrc,
   tool,

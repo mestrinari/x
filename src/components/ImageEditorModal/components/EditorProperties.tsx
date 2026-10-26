@@ -62,6 +62,7 @@ type Props = Pick<
   | "handleRotationChange"
   | "commitRotationChange"
 >;
+
 export function EditorProperties({
   tool,
   setTool,
@@ -166,6 +167,7 @@ export function EditorProperties({
               leftIcon={<BringToFront size={14} />}
               onClick={() => {
                 const selected = items.find((item) => item.id === selectedId);
+
                 if (selected)
                   pushHistory([
                     ...items.filter((item) => item.id !== selectedId),
@@ -182,6 +184,7 @@ export function EditorProperties({
               leftIcon={<SendToBack size={14} />}
               onClick={() => {
                 const selected = items.find((item) => item.id === selectedId);
+
                 if (selected)
                   pushHistory([
                     selected,
@@ -198,6 +201,7 @@ export function EditorProperties({
             const trackingStep = trackingSteps.find(
               (step) => step.id === item.trackingStepId,
             );
+
             return (
               <CanvasItemCard
                 type="button"
@@ -445,6 +449,7 @@ export function EditorProperties({
               leftIcon={<Trash2 size={14} />}
               onClick={() => {
                 const newItems = items.filter((it) => it.id !== selectedId);
+
                 pushHistory(newItems);
                 setSelectedId(null);
               }}

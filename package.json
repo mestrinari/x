@@ -24,11 +24,16 @@
     "styled-components": "^6.6.0"
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.0",
+    "@typescript-eslint/parser": "^8.72.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "eslint": "^10.13.0",
     "oxfmt": "^0.2.0",
     "prettier": "3.9.10",
     "tailwindcss": "^4.0.0",

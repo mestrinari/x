@@ -9,5 +9,6 @@ export default function App() {
 
 function NotificationsApp() {
   const { actorId } = useDirectory();
+
   return <NotificationProvider identityKey={actorId || null}><RouterProvider router={router} /></NotificationProvider>;
 }

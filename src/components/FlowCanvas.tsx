@@ -11,6 +11,7 @@ function StageNode({ data, selected }: NodeProps) {
   const { userName } = useDirectory();
   const stage = data.stage as Stage;
   const flow = data.flow as Flow;
+
   return <div className={`flow-node ${selected ? 'selected' : ''}`}><Handle type="target" position={Position.Left} /><div className="flow-node-stripe" /><small>{flow.name}</small><strong>{stage.name}</strong><Badge tone={statusTone(stage.state)}>{stage.state}</Badge><span>{stage.assigneeIds.length ? userName(stage.assigneeIds[0]) : 'Sem responsável'}</span><Handle type="source" position={Position.Right} /></div>;
 }
 
@@ -24,6 +25,7 @@ export function FlowCanvas({ flows, dependencies, onSelectStage, editing = false
     data: { stage, flow },
   }))), [flows]);
   const [displayNodes, setNodes, onNodesChange] = useNodesState(nodes);
+
   useEffect(() => setNodes(nodes), [nodes, setNodes]);
   const edges = useMemo(() => dependencies.filter((dependency) => dependency.active).map((dependency) => ({
     id: dependency.id, source: dependency.sourceStageId, target: dependency.targetStageId,

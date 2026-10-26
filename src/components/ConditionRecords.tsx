@@ -11,15 +11,20 @@ export function ConditionRecords({ticket}:{ticket:Ticket}) {
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
   const [attempt,setAttempt]=useState(0);
-  useEffect(()=>{let active=true;setLoading(true);setError('');
+
+  useEffect(()=>{let active=true;
+
+setLoading(true);setError('');
     Promise.all(ticket.dependencies.map(async d=>({
       evaluations:await allPages(p=>api.avaliacoesDependencias.list({...p,dependenciaId:d.id})),
       transitions:await allPages(p=>api.transicoes.list({...p,dependenciaId:d.id})),
     }))).then(rows=>{if(active){setEvaluations(rows.flatMap(r=>r.evaluations));setTransitions(rows.flatMap(r=>r.transitions));}}).catch(e=>{if(active)setError(errorMessage(e));}).finally(()=>{if(active)setLoading(false);});
+
     return()=>{active=false;};
   },[ticket,attempt]);
   const stages=ticket.flows.flatMap(f=>f.stages);
   const name=(id:string|number)=>stages.find(s=>s.id===String(id))?.name ?? String(id);
+
   return <section className="surface"><div className="surface-head"><div><h2>Condições e decisões registradas</h2><p>As regras não são avaliadas automaticamente pela API atual.</p></div><Button onClick={()=>setAttempt(x=>x+1)}>Atualizar</Button></div>
     {error && <p className="info-callout" role="alert">{error}</p>}
     {loading ? <p className="empty-inline" role="status">Carregando condições...</p> : <div className="form-grid">{ticket.dependencies.map(d=><section key={d.id} className="review-block"><div className="review-title"><h3>{name(d.sourceStageId)} → {name(d.targetStageId)}</h3><span>{d.condition}</span></div><div className="form-grid"><p>Critério: {d.expected}</p>

@@ -10,6 +10,7 @@ export function useScreenCapture(
   const [capturingScreen, setCapturingScreen] = useState(false);
   const captureStream = useRef<MediaStream | null>(null);
   const generation = useRef(0);
+
   useEffect(() => {
     return () => {
       generation.current++;
@@ -23,13 +24,17 @@ export function useScreenCapture(
       setImageError(
         "Captura de tela indisponível neste navegador. Use Win + Shift + S e depois Ctrl + V no editor.",
       );
+
       return;
     }
+
     const requestGeneration = generation.current;
+
     setCapturingScreen(true);
     setImageError(null);
     let stream: MediaStream | null = null;
     const video = targetWindow.document.createElement("video");
+
     try {
       stream = await targetWindow.navigator.mediaDevices.getDisplayMedia({
         video: true,
@@ -45,6 +50,7 @@ export function useScreenCapture(
           () => reject(new Error("A captura demorou demais. Tente novamente.")),
           10000,
         );
+
         video.requestVideoFrameCallback(() => {
           targetWindow.clearTimeout(timeout);
           resolve();
@@ -52,9 +58,11 @@ export function useScreenCapture(
       });
       if (!stream.active || requestGeneration !== generation.current) return;
       const canvas = targetWindow.document.createElement("canvas");
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext("2d");
+
       if (!context || !canvas.width || !canvas.height)
         throw new Error("Não foi possível capturar a tela.");
       context.drawImage(video, 0, 0);

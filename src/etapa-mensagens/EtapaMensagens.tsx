@@ -11,7 +11,9 @@ import { Trash2 as DeleteOutline, Pencil as EditOutlined, Reply as ReplyOutlined
 import type { ApiId } from "../api/types";
 
 export type UsuarioMencao = { id: number; nome: string; ativo: boolean };
+
 export type Mencao = { usuarioId: number; nome: string; inicio: number; fim: number };
+
 export type MensagemEtapa = {
   id: string;
   etapaId: string;
@@ -25,11 +27,13 @@ export type MensagemEtapa = {
   excluidoEm: string | null;
   versao: string;
 };
+
 export type SalvarMensagem = {
   conteudo: string;
   mensagemPaiId: string | null;
   mencoes: Mencao[];
 };
+
 export type EtapaMensagensApi = {
   listar: (etapaId: ApiId, signal: AbortSignal) => Promise<MensagemEtapa[]>;
   usuarios: (busca: string, signal: AbortSignal) => Promise<UsuarioMencao[]>;
@@ -39,30 +43,37 @@ export type EtapaMensagensApi = {
 };
 
 type Props = { etapaId: ApiId; usuarioAtualId: number; api: EtapaMensagensApi };
+
 type Sugestao = { inicio: number; fim: number; busca: string };
 
 function localizarMencao(texto: string, cursor: number): Sugestao | null {
   const anterior = texto.slice(0, cursor);
   const match = /(^|\s)@([^@\n\r\s]*)$/.exec(anterior);
+
   if (!match) return null;
   const inicio = cursor - match[2].length - 1;
+
   return { inicio, fim: cursor, busca: match[2] };
 }
 
 function atualizarMencoes(antigo: string, novo: string, mencoes: Mencao[]): Mencao[] {
   let prefixo = 0;
+
   while (prefixo < Math.min(antigo.length, novo.length) && antigo[prefixo] === novo[prefixo]) prefixo++;
   let sufixo = 0;
+
   while (
     sufixo < Math.min(antigo.length - prefixo, novo.length - prefixo) &&
     antigo[antigo.length - sufixo - 1] === novo[novo.length - sufixo - 1]
   ) sufixo++;
   const fimAntigo = antigo.length - sufixo;
   const delta = novo.length - antigo.length;
+
   return mencoes.flatMap(m => {
     if (m.inicio < 0) return [m];
     if (m.fim <= prefixo) return [m];
     if (m.inicio >= fimAntigo) return [{ ...m, inicio: m.inicio + delta, fim: m.fim + delta }];
+
     return [];
   });
 }
@@ -87,11 +98,16 @@ function EditorMensagem({
   const ancoraRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!sugestao) { setUsuarios([]); return; }
+    if (!sugestao) { setUsuarios([]);
+
+ return; }
+
     const controller = new AbortController();
+
     usuariosApi(sugestao.busca, controller.signal)
       .then(lista => { if (!controller.signal.aborted) { setUsuarios(lista.filter(u => u.ativo).slice(0, 8)); setIndice(0); } })
       .catch(() => { if (!controller.signal.aborted) setUsuarios([]); });
+
     return () => controller.abort();
   }, [sugestao?.busca, usuariosApi, sugestao !== null]);
 
@@ -111,13 +127,16 @@ function EditorMensagem({
     const preservadas = mencoes.flatMap(m => {
       if (m.fim <= sugestao.inicio) return [m];
       if (m.inicio >= sugestao.fim) return [{ ...m, inicio: m.inicio + delta, fim: m.fim + delta }];
+
       return [];
     });
+
     setTexto(novo);
     setMencoes([...preservadas, { usuarioId: usuario.id, nome: usuario.nome, inicio: sugestao.inicio, fim: sugestao.inicio + rotulo.length }].sort((a,b) => a.inicio - b.inicio));
     setSugestao(null);
     setUsuarios([]);
     const proximoCursor = sugestao.inicio + rotulo.length + 1;
+
     requestAnimationFrame(() => {
       campoRef.current?.focus();
       campoRef.current?.setSelectionRange(proximoCursor, proximoCursor);
@@ -130,6 +149,7 @@ function EditorMensagem({
     try {
       setErro("");
       const validas = mencoes.filter(m => m.inicio < 0 || (m.fim <= texto.length && texto.slice(m.inicio, m.fim).startsWith("@")));
+
       await onSalvar(texto.trim(), validas);
       if (!inicial) { setTexto(""); setMencoes([]); setSugestao(null); }
     } catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível salvar a mensagem."); }
@@ -143,12 +163,17 @@ function EditorMensagem({
         placeholder={placeholder ?? "Escreva uma mensagem. Digite @ para mencionar alguém."}
         value={texto} disabled={carregando}
         onChange={e => alterar(e.target.value, e.target.selectionStart ?? e.target.value.length)}
-        onClick={e => { const el = e.currentTarget.querySelector("textarea"); if (el) setSugestao(localizarMencao(texto, el.selectionStart)); }}
+        onClick={e => { const el = e.currentTarget.querySelector("textarea");
+
+ if (el) setSugestao(localizarMencao(texto, el.selectionStart)); }}
         onKeyDown={e => {
           if (sugestao && usuarios.length) {
             if (e.key === "ArrowDown") { e.preventDefault(); setIndice(i => (i + 1) % usuarios.length); }
+
             if (e.key === "ArrowUp") { e.preventDefault(); setIndice(i => (i - 1 + usuarios.length) % usuarios.length); }
+
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); selecionar(usuarios[indice] ?? usuarios[0]); }
+
             if (e.key === "Escape") setSugestao(null);
           } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void salvar(); }
         }}
@@ -202,14 +227,17 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
   const consulta = useRef<AbortController | null>(null);
   const bloqueiaAtualizacao = useRef(false);
   const atualizacaoPendente = useRef(false);
+
   bloqueiaAtualizacao.current = salvando || editandoId !== null;
 
   const recarregar = useCallback(async () => {
     consulta.current?.abort();
     const controller = new AbortController();
+
     consulta.current = controller;
     try {
       const resultado = await api.listar(etapaId, controller.signal);
+
       if (ativo.current && !controller.signal.aborted) setMensagens(resultado);
     } catch (error) { if (!controller.signal.aborted) throw error; }
   }, [api, etapaId]);
@@ -221,6 +249,7 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
     void recarregar().catch(e => {
       if (ativo.current) setErro(e instanceof Error ? e.message : "Erro ao consultar mensagens.");
     }).finally(() => { if (ativo.current) setCarregando(false); });
+
     return () => { ativo.current = false; consulta.current?.abort(); };
   }, [recarregar]);
 
@@ -229,13 +258,17 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
     const atualizar = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (bloqueiaAtualizacao.current) { atualizacaoPendente.current = true; return; }
+        if (bloqueiaAtualizacao.current) { atualizacaoPendente.current = true;
+
+ return; }
+
         void recarregar().catch(() => { if (ativo.current) setErro("Não foi possível atualizar a conversa. Use Atualizar mensagens."); });
       }, 200);
     };
     const parar = observarMensagens(etapaId, atualizar, setConectado);
     // Redis Pub/Sub não mantém eventos perdidos; reconcilia também após falhas no backplane.
     const reconcile = setInterval(atualizar, 30000);
+
     return () => { clearTimeout(timer); clearInterval(reconcile); parar(); };
   }, [etapaId, recarregar]);
 
@@ -259,12 +292,15 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
       try { await recarregar(); }
       catch { if (ativo.current) setErro("Mensagem salva, mas não foi possível atualizar a conversa. Clique em Atualizar mensagens."); }
     }
-    catch (e) { const msg = e instanceof Error ? e.message : "Operação não concluída."; setErro(msg); throw e; }
+    catch (e) { const msg = e instanceof Error ? e.message : "Operação não concluída.";
+
+ setErro(msg); throw e; }
     finally { operacao.current = false; if (ativo.current) setSalvando(false); }
   };
 
   const excluir = async (id: string) => {
     const mensagem = porId.get(id);
+
     if (!mensagem || !usuarioAtualId || salvando) return;
     if (!window.confirm("Excluir esta mensagem?")) return;
     try { await executar(() => api.excluir(id, usuarioAtualId, mensagem.versao)); }
@@ -331,7 +367,9 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
       </Stack>
       <Menu anchorEl={menuEl} open={Boolean(menuEl)} onClose={() => setMenuEl(null)}>
         <MenuItem onClick={() => { setEditandoId(menuId); setMenuEl(null); }}><EditOutlined size={18} style={{ marginRight: 8 }} />Editar</MenuItem>
-        <MenuItem onClick={() => { const id = menuId; setMenuEl(null); if (id !== null) void excluir(id); }}><DeleteOutline size={18} style={{ marginRight: 8 }} />Excluir</MenuItem>
+        <MenuItem onClick={() => { const id = menuId;
+
+ setMenuEl(null); if (id !== null) void excluir(id); }}><DeleteOutline size={18} style={{ marginRight: 8 }} />Excluir</MenuItem>
       </Menu>
     </Paper>
   );

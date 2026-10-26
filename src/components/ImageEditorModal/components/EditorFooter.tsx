@@ -29,6 +29,7 @@ type Props = Pick<
   | "fitImageToArea"
   | "activeTrackingStep"
 >;
+
 export function EditorFooter({
   imageSrc,
   imageDimensions,

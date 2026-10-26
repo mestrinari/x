@@ -37,9 +37,11 @@ function buildUrl(path: string, query?: RequestOptions['query']) {
 
 async function readPayload(response: Response) {
   const text = await response.text();
+
   if (!text) return undefined;
 
   const contentType = response.headers.get('content-type') ?? '';
+
   if (contentType.includes('json')) {
     try {
       return JSON.parse(text);
@@ -59,11 +61,13 @@ function getErrorMessage(payload: unknown, fallback: string) {
   if (typeof payload === 'string' && payload.trim()) return payload;
   if (payload && typeof payload === 'object') {
     const data = payload as Record<string, unknown>;
+
     if (typeof data.message === 'string') return data.message;
     if (typeof data.detail === 'string') return data.detail;
     if (data.errors && typeof data.errors === 'object') return Object.values(data.errors).flat().join(' ');
     if (typeof data.title === 'string') return data.title;
   }
+
   return fallback;
 }
 
@@ -73,6 +77,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const timeoutId = window.setTimeout(() => controller.abort(), options.timeoutMs ?? apiConfig.timeoutMs);
 
   const abort = () => controller.abort();
+
   if (options.signal) {
     if (options.signal.aborted) controller.abort();
     else options.signal.addEventListener('abort', abort, { once: true });
@@ -80,6 +85,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   const headers = new Headers(options.headers);
   const actor = window.localStorage?.getItem('orbit.operator');
+
   if (actor && /^[1-9]\d*$/.test(actor) && options.method && options.method !== 'GET')
     headers.set('X-Usuario-Id', actor);
   headers.set('Accept', 'application/json, text/plain, */*');
@@ -110,6 +116,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new ApiError('A chamada para a API expirou ou foi cancelada.', 408, url);
     }
+
     throw new ApiError('Não foi possível conectar à API de chamados.', 0, url, error);
   } finally {
     options.signal?.removeEventListener('abort', abort);

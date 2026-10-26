@@ -54,8 +54,10 @@ export function TicketDetail() {
   const selected = flows
     .flatMap((f) => f.stages)
     .find((s) => s.id === selectedId);
+
   useEffect(() => {
     let active = true;
+
     setLoading(true);
     setApiError("");
     loadTicket(id!)
@@ -82,6 +84,7 @@ export function TicketDetail() {
       .finally(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
@@ -92,6 +95,7 @@ export function TicketDetail() {
     setMutationError(null);
     try {
       const execution = await executeStage(selected, action, actorId, result);
+
       try {
         await api.historicos.etapas.create({
           etapaId: selected.id,
@@ -111,6 +115,7 @@ export function TicketDetail() {
             errorMessage(e),
         );
       }
+
       setReloadKey((x) => x + 1);
     } catch (e) {
       setMutationError(errorMessage(e));
@@ -118,9 +123,11 @@ export function TicketDetail() {
       setMutationLoading(false);
     }
   }
+
   const start = () => mutate("start"),
     finish = () => mutate("finish"),
     reopen = () => mutate("reopen");
+
   if (loading)
     return (
       <div className="empty-state" role="status">
@@ -136,6 +143,7 @@ export function TicketDetail() {
         </Button>
       </div>
     );
+
   return (
     <>
       <PageHeader
@@ -416,6 +424,7 @@ export function TicketDetail() {
 
 function GenericDetail({ tab, source }: { tab: number; source: Ticket }) {
   const { userName } = useDirectory();
+
   if (tab === 0)
     return (
       <div className="overview-grid">
@@ -450,6 +459,7 @@ function GenericDetail({ tab, source }: { tab: number; source: Ticket }) {
       </div>
     );
   if (tab === 4) return <ConditionRecords ticket={source} />;
+
   return (
     <ActivityRecords
       ticket={source}

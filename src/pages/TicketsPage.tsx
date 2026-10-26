@@ -22,6 +22,7 @@ export function TicketsPage({ mine = false }: { mine?: boolean }) {
 
   const loadTickets = useCallback(() => {
     let active = true;
+
     setLoading(true);
     setApiError(null);
 
@@ -49,6 +50,7 @@ export function TicketsPage({ mine = false }: { mine?: boolean }) {
 
   const sourceTickets = (remoteTickets ?? []).filter(t => !mine || Boolean(actorId) && (t.creatorId === actorId || t.assigneeIds.includes(actorId)));
   const filtered = useMemo(() => sourceTickets.filter((ticket) => `${ticket.title} ${ticketDisplayId(ticket.id)}`.toLowerCase().includes(query.toLowerCase()) && (status === 'Todos' || ticket.status === status)), [query, sourceTickets, status]);
+
   return <><PageHeader eyebrow="Atendimento" title={mine ? "Meus Chamados" : "Chamados"} description="Acompanhe solicitações, responsáveis e o andamento dos fluxos." actions={<Button onClick={() => navigate('/chamados/novo')}><Plus size={16} /> Novo chamado</Button>} />
     {mine && !actorId && <div className="info-callout">Selecione o operador no menu lateral.</div>}
     <div className="metric-grid"><div className="metric"><span>Em andamento</span><strong>{sourceTickets.filter(t => t.status === "Em andamento").length}</strong><small>Chamados em andamento</small></div><div className="metric"><span>Aguardando decisão</span><strong>{sourceTickets.filter(t => t.status === "Aguardando").length}</strong><small>Requerem atenção</small></div><div className="metric"><span>Concluídos</span><strong>{sourceTickets.filter(t => t.status === "Concluído").length}</strong><small>Chamados concluídos</small></div></div>

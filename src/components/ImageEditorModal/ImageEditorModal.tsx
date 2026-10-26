@@ -22,6 +22,7 @@ import { EditorToolbar } from "./components/EditorToolbar";
 import { EditorProperties } from "./components/EditorProperties";
 import { EditorFooter } from "./components/EditorFooter";
 import { useImageEditor } from "./useImageEditor";
+
 export function ImageEditorModal(props: ImageEditorProps) {
   const {
     open,
@@ -127,6 +128,7 @@ export function ImageEditorModal(props: ImageEditorProps) {
     handleRotationChange,
     commitRotationChange,
   } = useImageEditor(props);
+
   return (
     <Dialog
       open={open}

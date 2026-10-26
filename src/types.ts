@@ -1,6 +1,9 @@
 import type { Chamado, ChamadoFluxo, ChamadoFluxoEtapa, ChamadoFluxoEtapaDependencia, ChamadoFluxoEtapaExecucao } from './api/types';
+
 export type UserRole = string;
+
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+
 export type StageState =
   | 'Não iniciada'
   | 'Disponível'

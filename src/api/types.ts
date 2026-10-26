@@ -1,4 +1,5 @@
 export type ApiId = number | string;
+
 export type Nullable<T> = T | null;
 
 export interface PageResponse<T> {

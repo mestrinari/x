@@ -10,6 +10,7 @@ import type {
 } from "./types";
 import { clamp, getTrackingAnchor } from "./geometry";
 import { drawTrackingExportOverlay } from "./trackingExport";
+
 type Props = {
   imageDimensions: { w: number; h: number };
   sourceImageRef: RefObject<HTMLImageElement | null>;
@@ -27,6 +28,7 @@ type Props = {
   onConfirmDocument: ImageEditorProps["onConfirmDocument"];
   setImageError: (error: string | null) => void;
 };
+
 export function useImageExport({
   imageDimensions,
   sourceImageRef,
@@ -49,10 +51,13 @@ export function useImageExport({
       if (!imageDimensions.w || !imageDimensions.h || !sourceImageRef.current) {
         throw new Error("Carregue uma imagem antes de exportar.");
       }
+
       const output = document.createElement("canvas");
+
       output.width = imageDimensions.w;
       output.height = imageDimensions.h;
       const context = output.getContext("2d");
+
       if (!context) throw new Error("O navegador não disponibilizou o canvas.");
       context.drawImage(
         sourceImageRef.current,
@@ -67,6 +72,7 @@ export function useImageExport({
         else if (item.tool === "rectangle") drawRect(context, item);
         else if (item.tool === "text") drawText(context, item);
       }
+
       if (withTrackingOverlay) {
         drawTrackingExportOverlay(
           context,
@@ -76,6 +82,7 @@ export function useImageExport({
           items,
         );
       }
+
       return output.toDataURL("image/png");
     },
     [
@@ -95,10 +102,13 @@ export function useImageExport({
     if (!imageDimensions.w || !imageDimensions.h || !sourceImageRef.current) {
       throw new Error("Carregue uma imagem antes de salvar.");
     }
+
     const output = document.createElement("canvas");
+
     output.width = imageDimensions.w;
     output.height = imageDimensions.h;
     const context = output.getContext("2d");
+
     if (!context) throw new Error("O navegador não disponibilizou o canvas.");
     context.drawImage(
       sourceImageRef.current,
@@ -107,6 +117,7 @@ export function useImageExport({
       output.width,
       output.height,
     );
+
     return output.toDataURL("image/png");
   }, [imageDimensions.h, imageDimensions.w]);
 
@@ -123,8 +134,10 @@ export function useImageExport({
         "Aguarde o carregamento das imagens coladas antes de salvar.",
       );
     const context = canvasRef.current?.getContext("2d");
+
     if (!context) throw new Error("O navegador não disponibilizou o canvas.");
     const evidenceId = `image_evidence_${Date.now()}`;
+
     return {
       id: evidenceId,
       imageDataUrl: createBaseDataUrl(),
@@ -142,6 +155,7 @@ export function useImageExport({
           )
           .map((item) => {
             const anchor = getTrackingAnchor(item, context);
+
             return {
               id: `${evidenceId}_${item.id}`,
               xPercent: imageDimensions.w
@@ -181,13 +195,16 @@ export function useImageExport({
   const handleExport = useCallback(() => {
     try {
       const dataUrl = createFinalDataUrl();
+
       if (onExport) onExport(dataUrl);
       else {
         const link = document.createElement("a");
+
         link.download = `imagem-editada-${Date.now()}.png`;
         link.href = dataUrl;
         link.click();
       }
+
       setImageError(null);
     } catch (error) {
       setImageError(
@@ -200,6 +217,7 @@ export function useImageExport({
     try {
       const dataUrl = createFinalDataUrl();
       const link = document.createElement("a");
+
       link.download = `print-editor-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();

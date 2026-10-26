@@ -11,6 +11,7 @@ const statusLabels: Record<number, string> = {
 
 function formatDate(value: string) {
   const date = new Date(value);
+
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
 }
 
@@ -50,6 +51,7 @@ export function ticketAssigneeName(id: string) {
 
 export function fluxoToFlow(fluxo: ChamadoFluxo, stages: Stage[] = []): Flow {
   const status = Number(fluxo.status);
+
   return {
     remote: fluxo,
     id: String(fluxo.id),
@@ -66,6 +68,7 @@ export function fluxoToFlow(fluxo: ChamadoFluxo, stages: Stage[] = []): Flow {
 export function execucaoToExecution(execucao: ChamadoFluxoEtapaExecucao, stageId: string): Stage['executions'][number] {
   const status = Number(execucao.status);
   const executionStatus = status === 2 ? 'Concluída' : status === 1 ? 'Em andamento' : status === 0 ? 'Não iniciada' : status === 5 ? 'Cancelada' : 'Invalidada';
+
   return {
     remote: execucao,
     id: String(execucao.id),
@@ -83,6 +86,7 @@ export function execucaoToExecution(execucao: ChamadoFluxoEtapaExecucao, stageId
 export function etapaToStage(etapa: ChamadoFluxoEtapa, execucoes: ChamadoFluxoEtapaExecucao[] = []): Stage {
   const executions = [...execucoes].sort((a, b) => a.numeroExecucao - b.numeroExecucao).map((execucao) => execucaoToExecution(execucao, String(etapa.id)));
   const latestExecution = executions[executions.length - 1];
+
   return {
     remote: etapa,
     visualOrder: etapa.ordemVisual,
@@ -107,17 +111,21 @@ function decodeCondition(value: string | null | undefined, type: number): string
   if (type === 3) return value;
   try {
     const parsed: unknown = JSON.parse(value);
+
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const obj = parsed as Record<string, unknown>;
       const field = type === 1 ? obj.resultado : type === 2 ? obj.acao : undefined;
+
       return typeof field === 'string' ? field : value;
     }
   } catch { return value; }
+
   return value;
 }
 
 export function dependenciaToDependency(dependencia: ChamadoFluxoEtapaDependencia): Dependency {
   const conditions: Dependency['condition'][] = ['Conclusão da etapa', 'Resultado da etapa', 'Escolha manual', 'Regra automática'];
+
   return {
     remote: dependencia,
     id: String(dependencia.id),
