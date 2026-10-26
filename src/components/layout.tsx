@@ -1,3 +1,4 @@
+import { DevTools } from './dev/DevTools';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { Bell, ChevronDown, CircleHelp, Clock3, Gauge, Menu, PanelLeftClose, Settings, Ticket, Users, Workflow, X } from 'lucide-react';
@@ -34,6 +35,7 @@ export function AppLayout() {
       <div className="main-shell">
         <header className="topbar"><IconButton label="Abrir menu" onClick={() => setOpen(true)}><Menu size={20} /></IconButton><div className="topbar-path"><span>Central de atendimento</span><span>/</span><strong>{routeLabel(location.pathname)}</strong></div><div className="topbar-actions"><IconButton label="Recolher navegação"><PanelLeftClose size={18} /></IconButton><NotificationBell /></div></header>
         <main className="main-content"><Outlet /></main>
+        <DevTools />
       </div>
     </div>
   );
