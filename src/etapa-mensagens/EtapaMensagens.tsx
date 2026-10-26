@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { observarMensagens } from "./realtime";
 import {
   Alert, Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton,
   List, ListItemAvatar, ListItemButton, ListItemText, Menu, MenuItem,
@@ -197,25 +198,53 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [menuEl, setMenuEl] = useState<HTMLElement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [conectado, setConectado] = useState(false);
+  const consulta = useRef<AbortController | null>(null);
+  const bloqueiaAtualizacao = useRef(false);
+  const atualizacaoPendente = useRef(false);
+  bloqueiaAtualizacao.current = salvando || editandoId !== null;
 
-  const recarregar = async () => {
+  const recarregar = useCallback(async () => {
+    consulta.current?.abort();
     const controller = new AbortController();
-    const resultado = await api.listar(etapaId, controller.signal);
-    if (ativo.current) setMensagens(resultado);
-  };
+    consulta.current = controller;
+    try {
+      const resultado = await api.listar(etapaId, controller.signal);
+      if (ativo.current && !controller.signal.aborted) setMensagens(resultado);
+    } catch (error) { if (!controller.signal.aborted) throw error; }
+  }, [api, etapaId]);
 
   useEffect(() => {
-    const controller = new AbortController();
     ativo.current = true;
     setCarregando(true);
     setErro("");
-    api.listar(etapaId, controller.signal).then(lista => {
-      if (!controller.signal.aborted) setMensagens(lista);
-    }).catch(e => {
-      if (!controller.signal.aborted) setErro(e instanceof Error ? e.message : "Erro ao consultar mensagens.");
-    }).finally(() => { if (!controller.signal.aborted) setCarregando(false); });
-    return () => { ativo.current = false; controller.abort(); };
-  }, [api, etapaId]);
+    void recarregar().catch(e => {
+      if (ativo.current) setErro(e instanceof Error ? e.message : "Erro ao consultar mensagens.");
+    }).finally(() => { if (ativo.current) setCarregando(false); });
+    return () => { ativo.current = false; consulta.current?.abort(); };
+  }, [recarregar]);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const atualizar = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (bloqueiaAtualizacao.current) { atualizacaoPendente.current = true; return; }
+        void recarregar().catch(() => { if (ativo.current) setErro("Não foi possível atualizar a conversa. Use Atualizar mensagens."); });
+      }, 200);
+    };
+    const parar = observarMensagens(etapaId, atualizar, setConectado);
+    // Redis Pub/Sub não mantém eventos perdidos; reconcilia também após falhas no backplane.
+    const reconcile = setInterval(atualizar, 30000);
+    return () => { clearTimeout(timer); clearInterval(reconcile); parar(); };
+  }, [etapaId, recarregar]);
+
+  useEffect(() => {
+    if (!salvando && editandoId === null && atualizacaoPendente.current) {
+      atualizacaoPendente.current = false;
+      void recarregar().catch(() => { if (ativo.current) setErro("Use Atualizar mensagens para sincronizar a conversa."); });
+    }
+  }, [salvando, editandoId, recarregar]);
 
   const porId = useMemo(() => new Map(mensagens.map(m => [m.id, m])), [mensagens]);
   const ordenadas = useMemo(() => [...mensagens].sort((a, b) => Date.parse(a.criadoEm) - Date.parse(b.criadoEm) || a.id.localeCompare(b.id, undefined, { numeric: true })), [mensagens]);
@@ -248,7 +277,8 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>Mensagens da etapa</Typography>
           <Typography variant="body2" color="text.secondary">Converse com os envolvidos. Use @ para mencionar usuários.</Typography>
-          <Button size="small" disabled={salvando || carregando} onClick={async () => {
+          <Typography variant="caption" color="text.secondary">{conectado ? "Conectado em tempo real" : "Reconectando · atualização periódica ativa"}</Typography>
+          <Button size="small" disabled={salvando || carregando || editandoId !== null} onClick={async () => {
             setCarregando(true); setErro("");
             try { await recarregar(); }
             catch (e) { setErro(e instanceof Error ? e.message : "Erro ao atualizar mensagens."); }
@@ -280,6 +310,9 @@ function ConversaEtapa({ etapaId, usuarioAtualId, api }: Props) {
                     ) : <Typography variant="body2" sx={{ mt: .7, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                       {m.excluidoEm ? <em>Mensagem excluída</em> : m.conteudo}
                     </Typography>}
+                    {!m.excluidoEm && editandoId !== m.id && m.mencoes.length > 0 && <Stack direction="row" sx={{ flexWrap: "wrap", gap: .5, mt: 1 }}>
+                      {m.mencoes.map(mencao => <Chip key={mencao.usuarioId} size="small" label={`@${mencao.nome}`} />)}
+                    </Stack>}
                     {!m.excluidoEm && editandoId !== m.id && <Button size="small" startIcon={<ReplyOutlined />} disabled={salvando || !usuarioAtualId} onClick={() => setRespostaId(m.id)}>Responder</Button>}
                   </Box>
                   {m.usuarioId === usuarioAtualId && !m.excluidoEm && editandoId !== m.id && <IconButton size="small" disabled={salvando} aria-label="Ações da mensagem" onClick={e => { setMenuEl(e.currentTarget); setMenuId(m.id); }}><EditOutlined size={18} /></IconButton>}

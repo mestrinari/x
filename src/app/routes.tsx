@@ -1,11 +1,15 @@
-import { Navigate, createBrowserRouter } from 'react-router';
+import { Navigate, createBrowserRouter, useParams } from 'react-router';
 import { AppLayout } from '../components/layout';
 import { Dashboard } from '../pages/Dashboard';
 import { FlowsPage, HistoryPage, SettingsPage } from '../pages/ResourcePages';
-import { TicketDetail } from '../pages/TicketDetail';
 import { TicketsPage } from '../pages/TicketsPage';
 import { TicketWizard } from '../pages/TicketWizard';
 import { UserForm, UsersPage } from '../pages/UsersPage';
+
+function LegacyEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/chamados/${id}`} replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -15,10 +19,10 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: 'chamados', Component: TicketsPage },
       { path: 'chamados/novo', Component: TicketWizard },
-      { path: 'chamados/:id', Component: TicketDetail },
-      { path: 'chamados/:id/editar', Component: TicketWizard },
-      { path: 'chamados/:id/fluxos', Component: TicketDetail },
-      { path: 'chamados/:id/fluxos/:fluxoId', Component: TicketDetail },
+      { path: 'chamados/:id', Component: TicketWizard },
+      { path: 'chamados/:id/editar', Component: LegacyEditRedirect },
+      { path: 'chamados/:id/fluxos', Component: TicketWizard },
+      { path: 'chamados/:id/fluxos/:fluxoId', Component: TicketWizard },
       { path: 'usuarios', Component: UsersPage },
       { path: 'usuarios/novo', Component: UserForm },
       { path: 'usuarios/:id/editar', Component: UserForm },

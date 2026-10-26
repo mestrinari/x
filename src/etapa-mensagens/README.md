@@ -1,41 +1,26 @@
-# Mensagens por etapa — React + TypeScript + MUI
+# Mensagens por etapa
 
-## Arquivos
+Integrado ao TicketWizard, nas abas Etapas e Mensagens. O componente usa o operador selecionado no diretório e os endpoints reais da API C#.
 
-- `EtapaMensagens.tsx`: componente com histórico, respostas, edição, exclusão lógica e autocomplete de menções.
-- `api.ts`: adaptador HTTP de exemplo, com endpoints ajustáveis à API C#.
+## Contrato
 
-## Dependências
+- GET /api/mensagens-etapas?etapaId=123: paginação com itens, total, pagina, tamanho.
+- GET /api/mencoes-etapas?etapaId=123: destinatários das mensagens da etapa.
+- GET /api/usuarios: nomes dos autores e sugestões; pesquisa local sem distinção de acentos.
+- POST /api/mensagens-etapas: etapaId, usuarioId, conteudo, mensagemPaiId e mencoesUsuarioIds.
+- PUT /api/mensagens-etapas/{id}: conteudo, versao e mencoesUsuarioIds.
+- DELETE /api/mensagens-etapas/{id}: usuarioId e versao no corpo.
 
-```bash
-npm install @mui/material @emotion/react @emotion/styled @mui/icons-material
-```
+O adaptador usa src/api/http.ts e VITE_API_BASE_URL. A versão retornada pela API é obrigatória para editar/excluir. Mensagem e menções são salvas juntas pelo backend.
 
-## Utilização
+O banco armazena IDs dos destinatários, sem posições no texto. Menções existentes são preservadas na edição e podem ser removidas pelos chips. Não são inferidas posições a partir de nomes, que podem mudar ou se repetir.
 
-```tsx
-import EtapaMensagens from "./etapa-mensagens/EtapaMensagens";
-import { etapaMensagensApi } from "./etapa-mensagens/api";
+## Tempo real
 
-export function DetalheEtapa() {
-  return <EtapaMensagens etapaId={15} usuarioAtualId={2} api={etapaMensagensApi} />;
-}
-```
+O cliente SignalR conecta a /api/hubs/etapas?etapaId=123. Eventos MensagensAlteradas atualizam a conversa; reconexões também recarregam os dados. A consulta periódica de 30 segundos cobre indisponibilidade do hub/backplane. Atualizações são adiadas enquanto o usuário edita para preservar o rascunho e detectar conflitos com a versão original.
 
-## Contratos esperados da API C#
+Configure Redis no backend conforme REALTIME.md. Reinicie a API após compilar o hub. O proxy Vite está configurado com ws: true.
 
-- `GET /api/etapas/{etapaId}/mensagens`: retorna array de `MensagemEtapa`, incluindo `mencoes` com intervalos atuais.
-- `GET /api/usuarios?busca=ana`: retorna array de `{ id, nome, ativo }`.
-- `POST /api/etapas/{etapaId}/mensagens`: recebe `{ conteudo, mensagemPaiId, mencoes }`.
-- `PUT /api/mensagens/{mensagemId}`: recebe o mesmo formato.
-- `DELETE /api/mensagens/{mensagemId}`: define `ExcluidoEm`, preservando o histórico.
+## Verificação
 
-Cada menção enviada tem `{ usuarioId, inicio, fim }`, com `inicio` inclusivo e `fim` exclusivo, medidos em índices UTF-16 de JavaScript. Por exemplo, `Olá @Ana Costa`, onde `@Ana Costa` ocupa `[4, 14)`. O backend deve validar que esse trecho inicia com `@`, corresponde ao usuário selecionado e que as menções pertencem à mensagem. Ao persistir na tabela atual de menções, grave `MensagemId` e `UsuarioId`; os offsets podem ser descartados, mas não poderão ser reconstruídos fielmente pelo endpoint GET sem armazená-los ou criar um contrato de representação de menções estável.
-
-## Observações
-
-- O banco discutido possui apenas `MensagemId` e `UsuarioId` em `ChamadoFluxoEtapaMensagemMencao`. Para restaurar corretamente as menções como seleção editável, recomenda-se acrescentar `Inicio` e `Fim` à tabela ou adotar tokens estruturados.
-- A API deve identificar `UsuarioId` pelo usuário autenticado, sem confiar em IDs de autores enviados pelo navegador.
-- Mensagens com resposta precisam pertencer à mesma etapa da mensagem original.
-- O código inclui `window.confirm` para confirmação simples, substituível por `Dialog` do MUI.
-- Adapte `BASE_URL`, autenticação e nomes de rotas ao backend efetivo.
+Execute npx tsc --noEmit, npm run build e node scripts/check-messages.mjs. O último verifica o contrato HTTP com respostas simuladas, sem gravar no banco.

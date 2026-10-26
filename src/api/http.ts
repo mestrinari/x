@@ -1,7 +1,7 @@
 import { apiConfig } from './config';
 
 export interface RequestOptions extends Omit<RequestInit, 'body' | 'method'> {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   query?: Record<string, string | number | boolean | null | undefined>;
   body?: unknown;
   timeoutMs?: number;
@@ -72,12 +72,16 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), options.timeoutMs ?? apiConfig.timeoutMs);
 
+  const abort = () => controller.abort();
   if (options.signal) {
     if (options.signal.aborted) controller.abort();
-    else options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    else options.signal.addEventListener('abort', abort, { once: true });
   }
 
   const headers = new Headers(options.headers);
+  const actor = window.localStorage?.getItem('orbit.operator');
+  if (actor && /^[1-9]\d*$/.test(actor) && options.method && options.method !== 'GET')
+    headers.set('X-Usuario-Id', actor);
   headers.set('Accept', 'application/json, text/plain, */*');
   if (options.body !== undefined) headers.set('Content-Type', 'application/json');
 
@@ -108,6 +112,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     }
     throw new ApiError('Não foi possível conectar à API de chamados.', 0, url, error);
   } finally {
+    options.signal?.removeEventListener('abort', abort);
     window.clearTimeout(timeoutId);
   }
 }

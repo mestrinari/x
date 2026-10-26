@@ -102,6 +102,20 @@ export function etapaToStage(etapa: ChamadoFluxoEtapa, execucoes: ChamadoFluxoEt
   };
 }
 
+function decodeCondition(value: string | null | undefined, type: number): string {
+  if (!value) return '';
+  if (type === 3) return value;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const obj = parsed as Record<string, unknown>;
+      const field = type === 1 ? obj.resultado : type === 2 ? obj.acao : undefined;
+      return typeof field === 'string' ? field : value;
+    }
+  } catch { return value; }
+  return value;
+}
+
 export function dependenciaToDependency(dependencia: ChamadoFluxoEtapaDependencia): Dependency {
   const conditions: Dependency['condition'][] = ['Conclusão da etapa', 'Resultado da etapa', 'Escolha manual', 'Regra automática'];
   return {
@@ -112,7 +126,7 @@ export function dependenciaToDependency(dependencia: ChamadoFluxoEtapaDependenci
     targetFlowId: '',
     targetStageId: String(dependencia.etapaDestinoId),
     condition: conditions[Number(dependencia.tipoCondicao)] ?? 'Resultado da etapa',
-    expected: dependencia.configuracaoCondicao ?? 'Concluído',
+    expected: decodeCondition(dependencia.configuracaoCondicao, Number(dependencia.tipoCondicao)),
     active: dependencia.excluidoEm === null || dependencia.excluidoEm === undefined,
   };
 }

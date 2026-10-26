@@ -1,7 +1,13 @@
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
-import { DirectoryProvider } from './Directory';
+import { DirectoryProvider, useDirectory } from './Directory';
+import { NotificationProvider } from '../notifications/NotificationProvider';
 
 export default function App() {
-  return <DirectoryProvider><RouterProvider router={router} /></DirectoryProvider>;
+  return <DirectoryProvider><NotificationsApp /></DirectoryProvider>;
+}
+
+function NotificationsApp() {
+  const { actorId } = useDirectory();
+  return <NotificationProvider identityKey={actorId || null}><RouterProvider router={router} /></NotificationProvider>;
 }

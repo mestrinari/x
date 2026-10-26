@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router';
 import { Bell, ChevronDown, CircleHelp, Clock3, Gauge, Menu, PanelLeftClose, Settings, Ticket, Users, Workflow, X } from 'lucide-react';
 import { IconButton } from './ui';
 import { useDirectory } from '../app/Directory';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 const nav = [
   { label: 'Dashboard', path: '/', icon: Gauge },
@@ -30,7 +31,7 @@ export function AppLayout() {
         <div className="profile"><label style={{width:"100%"}}>Operador<select className="input" aria-label="Operador" value={actorId} onChange={e => setActorId(e.target.value)}><option value="">Selecione seu usuário</option>{users.filter(u => u.ativo).map(u => <option key={u.id} value={String(u.id)}>{u.nome}</option>)}</select></label></div>
       </aside>
       <div className="main-shell">
-        <header className="topbar"><IconButton label="Abrir menu" onClick={() => setOpen(true)}><Menu size={20} /></IconButton><div className="topbar-path"><span>Central de atendimento</span><span>/</span><strong>{routeLabel(location.pathname)}</strong></div><div className="topbar-actions"><IconButton label="Recolher navegação"><PanelLeftClose size={18} /></IconButton><IconButton label="Notificações"><Bell size={18} /><i /></IconButton></div></header>
+        <header className="topbar"><IconButton label="Abrir menu" onClick={() => setOpen(true)}><Menu size={20} /></IconButton><div className="topbar-path"><span>Central de atendimento</span><span>/</span><strong>{routeLabel(location.pathname)}</strong></div><div className="topbar-actions"><IconButton label="Recolher navegação"><PanelLeftClose size={18} /></IconButton><NotificationBell /></div></header>
         <main className="main-content"><Outlet /></main>
       </div>
     </div>
