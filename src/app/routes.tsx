@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter, useParams } from 'react-router';
+import { Navigate, createHashRouter, useParams } from 'react-router';
 import { AppLayout } from '../components/layout';
 import { Dashboard } from '../pages/Dashboard';
 import { FlowsPage, HistoryPage, SettingsPage } from '../pages/ResourcePages';
@@ -8,11 +8,10 @@ import { UserForm, UsersPage } from '../pages/UsersPage';
 
 function LegacyEditRedirect() {
   const { id } = useParams();
-
   return <Navigate to={`/chamados/${id}`} replace />;
 }
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     Component: AppLayout,
