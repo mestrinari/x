@@ -6,7 +6,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -15,7 +14,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["node", "vite/client"],
-    "ignoreDeprecations": "5.0",
 
     /* Regras de Rigor e Qualidade de Código */
     "strict": true,
