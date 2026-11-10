@@ -15,7 +15,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["node", "vite/client"],
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
 
     /* Regras de Rigor e Qualidade de Código */
     "strict": true,

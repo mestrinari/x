@@ -58,7 +58,9 @@ export function NotificationProvider({ children, identityKey }: { children: Reac
     let stopped = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const connection = new HubConnectionBuilder()
-      .withUrl(`${apiConfig.baseUrl}/api/hubs/notificacoes?usuarioId=${encodeURIComponent(identityKey)}`)
+      .withUrl(`${apiConfig.baseUrl}/api/hubs/notificacoes?usuarioId=${encodeURIComponent(identityKey)}`, {
+        accessTokenFactory: () => localStorage.getItem('token') ?? '',
+      })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000]).configureLogging(LogLevel.Error).build();
     const sync = () => { if (!stopped) void refresh(); };
     const schedule = () => {

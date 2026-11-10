@@ -84,6 +84,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   const headers = new Headers(options.headers);
+  const token = window.localStorage?.getItem('token');
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const actor = window.localStorage?.getItem('orbit.operator');
 
   if (actor && /^[1-9]\d*$/.test(actor) && options.method && options.method !== 'GET')
@@ -130,3 +135,4 @@ export const http = {
   put: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'body'>) => request<T>(path, { ...options, method: 'PUT', body }),
   delete: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'body'>) => request<T>(path, { ...options, method: 'DELETE', body }),
 };
+

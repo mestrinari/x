@@ -3,8 +3,11 @@ import { apiConfig } from "../api/config";
 import type { ApiId } from "../api/types";
 
 export function observarMensagens(etapaId: ApiId, atualizar: () => void, status: (conectado: boolean) => void) {
+  const hubUrl = `${apiConfig.baseUrl}/api/hubs/etapas?etapaId=${encodeURIComponent(etapaId)}`;
   const connection = new HubConnectionBuilder()
-    .withUrl(`${apiConfig.baseUrl}/api/hubs/etapas?etapaId=${encodeURIComponent(etapaId)}`)
+    .withUrl(hubUrl, {
+      accessTokenFactory: () => localStorage.getItem("token") ?? "",
+    })
     .withAutomaticReconnect([0, 2000, 10000, 30000])
     .configureLogging(LogLevel.Error)
     .build();
@@ -20,10 +23,7 @@ export function observarMensagens(etapaId: ApiId, atualizar: () => void, status:
   async function iniciar() {
     try {
       await connection.start();
-      if (encerrado) { await connection.stop();
-
- return; }
-
+      if (encerrado) { await connection.stop(); return; }
       conectado();
     } catch { agendar(); }
   }
@@ -40,3 +40,4 @@ export function observarMensagens(etapaId: ApiId, atualizar: () => void, status:
     void connection.stop().catch(() => {});
   };
 }
+

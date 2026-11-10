@@ -1,4 +1,4 @@
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+const configuredBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '';
 const configuredTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000);
 
 function normalizeBaseUrl(value: string) {
@@ -12,3 +12,4 @@ export const apiConfig = Object.freeze({
 });
 
 export type ApiConfig = typeof apiConfig;
+
