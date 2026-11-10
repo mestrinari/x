@@ -10,16 +10,17 @@ export default defineConfig(({ mode }) => {
     '/api': { target: proxyTarget, changeOrigin: true, secure: false, ws: true },
     '/hub': { target: proxyTarget, changeOrigin: true, secure: false, ws: true },
   };
+
   return {
+    base: mode === 'production' ? '/x/' : '/',
     plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
-  },
     server: { port: 8443, host: true, proxy },
     preview: { port: 8443, host: true, proxy },
   };
-})
-
+});
   
