@@ -10,8 +10,17 @@ export async function allPages<T>(list: (params: ListParams) => Promise<PageResp
   for (let page = 1; ; page++) {
     const result = await list({ Pagina: page, Tamanho: 200 });
 
-    items.push(...result.itens);
-    if (items.length >= result.total || result.itens.length === 0) return items;
+    const pageItems = Array.isArray(result)
+      ? result
+      : Array.isArray(result?.itens)
+        ? result.itens
+        : Array.isArray((result as unknown as { items?: T[] })?.items)
+          ? (result as unknown as { items: T[] }).items
+          : [];
+
+    items.push(...pageItems);
+    const total = typeof result?.total === 'number' ? result.total : items.length;
+    if (items.length >= total || pageItems.length === 0) return items;
   }
 }
 
